@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --background: #08090b;
+  --foreground: #ffffff;
+  --accent: #3b82f6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--background);
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+a {
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(59, 130, 246, 0.35);
+  color: #ffffff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+img {
+  max-width: 100%;
+}

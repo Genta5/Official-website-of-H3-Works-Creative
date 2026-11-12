@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+build/
+next-env.d.ts
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Prisma local database
+prisma/*.db
+prisma/*.db-journal
+prisma/*.sqlite
+prisma/*.sqlite-journal
+
+# Generated files
+/generated/prisma
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Local backups and temporary files
+*.backup
+*.backup*
+*.bak
+*.tsbuildinfo
+*.deb
+
+# Project-specific backup pages
+app/page.orderly-backup.tsx
+app/page.tsx.backup
+app/page.tsx.bak
+.npmrc

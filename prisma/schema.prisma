@@ -1,0 +1,492 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Merchant {
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  passwordHash   String
+  description    String?
+  supportContact String?
+  status         String   @default("active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  bots                Bot[]
+  products            Product[]
+  customers           Customer[]
+  orders              Order[]
+  sessions            Session[]
+  platformConnections PlatformConnection[]
+  storeWebsite        StoreWebsite?
+  itemkuSubscription  ItemkuSubscription?
+  itemkuProducts      ItemkuProduct[]
+  itemkuOrders        ItemkuOrder[]
+  itemkuStocks        ItemkuStock[]
+  planSubscriptions PlanSubscription[]
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  merchantId String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId])
+  @@index([expiresAt])
+}
+
+model Bot {
+  id                   String    @id @default(cuid())
+  merchantId           String
+  name                 String
+  username             String    @unique
+  telegramBotId        String?   @unique
+  encryptedToken       String
+  webhookSecret        String
+  status               String    @default("pending")
+  connectedAt          DateTime?
+  platformConnectionId String?   @unique
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  merchant           Merchant            @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  platformConnection PlatformConnection? @relation("LegacyBotConnection", fields: [platformConnectionId], references: [id], onDelete: SetNull)
+  orders             Order[]
+  telegramUpdates    TelegramUpdate[]
+
+  @@index([merchantId])
+  @@index([status])
+}
+
+model PlatformConnection {
+  id                   String    @id @default(cuid())
+  merchantId           String
+  platform             String
+  name                 String
+  externalId           String?
+  username             String?
+  encryptedCredentials String?
+  webhookSecret        String?
+  discordPublicKey     String?
+  status               String    @default("pending")
+  connectedAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  merchant         Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  legacyBot        Bot?              @relation("LegacyBotConnection")
+  orders           Order[]
+  subscriptions    Subscription[]
+  whatsappMessages WhatsAppMessage[]
+  discordGuilds    DiscordGuild[]
+
+  @@unique([platform, externalId])
+  @@index([merchantId])
+  @@index([platform, status])
+}
+
+model Subscription {
+  id             String    @id @default(cuid())
+  connectionId   String
+  durationMonths Int
+  status         String    @default("PENDING")
+  startsAt       DateTime?
+  endsAt         DateTime?
+  amount         Int?
+  currency       String    @default("IDR")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  connection PlatformConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId, status])
+  @@index([endsAt])
+}
+
+model Product {
+  id                   String    @id @default(cuid())
+  merchantId           String
+  name                 String
+  description          String?
+  price                Int
+  stock                Int       @default(0)
+  category             String    @default("Lainnya")
+  status               String    @default("active")
+  source               String    @default("MANUAL")
+  providerCode         String?
+  providerPrice        Int?
+  providerBrand        String?
+  providerType         String?
+  providerCategory     String?
+  providerStatus       String?
+  providerLastSyncedAt DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  merchant   Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@unique([merchantId, source, providerCode])
+  @@index([merchantId])
+  @@index([merchantId, source])
+  @@index([status])
+  @@index([providerCode])
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  merchantId     String
+  telegramUserId String?
+  whatsappId     String?
+  username       String?
+  name           String
+  totalOrders    Int      @default(0)
+  totalSpent     Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  merchant Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  orders   Order[]
+  messages WhatsAppMessage[]
+
+  @@unique([merchantId, telegramUserId])
+  @@unique([merchantId, whatsappId])
+  @@index([merchantId])
+}
+
+model Order {
+  id                   String   @id @default(cuid())
+  merchantId           String
+  botId                String?
+  platformConnectionId String?
+  customerId           String?
+  orderNumber          String
+  status               String   @default("Menunggu")
+  paymentStatus        String   @default("Belum Dibayar")
+  total                Int      @default(0)
+  notes                String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  merchant           Merchant            @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  bot                Bot?                @relation(fields: [botId], references: [id], onDelete: SetNull)
+  platformConnection PlatformConnection? @relation(fields: [platformConnectionId], references: [id], onDelete: SetNull)
+  customer           Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items              OrderItem[]
+
+  @@unique([merchantId, orderNumber])
+  @@index([merchantId])
+  @@index([botId])
+  @@index([platformConnectionId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String?
+  name      String
+  price     Int
+  quantity  Int
+  subtotal  Int
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model TelegramUpdate {
+  id          String    @id @default(cuid())
+  botId       String
+  updateId    Int
+  updateType  String?
+  rawPayload  String
+  processed   Boolean   @default(false)
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+  processingAt DateTime?
+
+  bot Bot @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@unique([botId, updateId])
+  @@index([botId])
+  @@index([processed])
+}
+
+model WhatsAppMessage {
+  id                   String   @id @default(cuid())
+  platformConnectionId String
+  customerId           String
+  externalMessageId    String   @unique
+  direction            String
+  messageType          String
+  content              String?
+  status               String   @default("received")
+  rawPayload           String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  platformConnection PlatformConnection @relation(fields: [platformConnectionId], references: [id], onDelete: Cascade)
+  customer           Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([platformConnectionId, createdAt])
+  @@index([customerId, createdAt])
+  @@index([status])
+}
+
+model DiscordGuild {
+  id                    String   @id @default(cuid())
+  platformConnectionId  String
+  guildId               String
+  name                  String
+  icon                  String?
+  status                String   @default("connected")
+  orderChannelId        String?
+  notificationChannelId String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  platformConnection PlatformConnection @relation(fields: [platformConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([platformConnectionId, guildId])
+  @@index([guildId])
+  @@index([platformConnectionId, status])
+}
+
+model ItemkuSubscription {
+  id                String    @id @default(cuid())
+  merchantId        String    @unique
+  planKey           String    @default("STARTER")
+  status            String    @default("PENDING")
+  startsAt          DateTime?
+  endsAt            DateTime?
+  amount            Int?
+  currency          String    @default("IDR")
+  maxProducts       Int       @default(20)
+  maxOrdersPerMonth Int       @default(100)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([status, endsAt])
+}
+
+model ItemkuProduct {
+  id                   String    @id @default(cuid())
+  merchantId           String
+  itemkuProductId      Int
+  name                 String
+  gameName             String?
+  itemTypeName         String?
+  price                Int       @default(0)
+  stock                Int       @default(0)
+  minimumOrder         Int       @default(1)
+  baseUnit             Int       @default(1)
+  fulfillmentMode      String    @default("MANUAL_STOCK")
+  usingDeliveryInfo    Boolean   @default(false)
+  deliveryInfoFields   String?
+  digiflazzProductCode String?
+  isActive             Boolean   @default(true)
+  syncedAt             DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  merchant Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  stocks   ItemkuStock[]
+  orders   ItemkuOrder[]
+
+  @@unique([merchantId, itemkuProductId])
+  @@index([merchantId, isActive])
+  @@index([merchantId, fulfillmentMode])
+}
+
+model ItemkuOrder {
+  id                  String    @id @default(cuid())
+  merchantId          String
+  productId           String?
+  itemkuOrderId       Int
+  orderNumber         String
+  productName         String
+  status              String    @default("REQUIRE_PROCESS")
+  processingStatus    String    @default("RECEIVED")
+  quantity            Int       @default(1)
+  price               Int       @default(0)
+  total               Int       @default(0)
+  requiredInformation String?
+  usingDeliveryInfo   Boolean   @default(false)
+  deliveryInfoFields  String?
+  rawPayload          String?
+  lastError           String?
+  processedAt         DateTime?
+  deliveredAt         DateTime?
+  deliveryAttemptedAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  merchant Merchant       @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  product  ItemkuProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  stocks   ItemkuStock[]
+
+  @@unique([merchantId, itemkuOrderId])
+  @@index([merchantId, status])
+  @@index([merchantId, processingStatus])
+  @@index([productId])
+}
+
+model ItemkuStock {
+  id                    String    @id @default(cuid())
+  merchantId            String
+  productId             String
+  orderId               String?
+  encryptedDeliveryInfo String
+  status                String    @default("AVAILABLE")
+  reservedAt            DateTime?
+  deliveredAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  merchant Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  product  ItemkuProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order    ItemkuOrder?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([merchantId, status])
+  @@index([productId, status])
+  @@index([orderId])
+}
+
+model StoreWebsite {
+  id               String    @id @default(cuid())
+  merchantId       String    @unique
+  name             String
+  slug             String    @unique
+  description      String?
+  logoUrl          String?
+  faviconUrl       String?
+  themeKey         String    @default("minimal")
+  globalSettings   String    @default("{}")
+  status           String    @default("DRAFT")
+  publishedVersion Int       @default(0)
+  publishedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  merchant  Merchant        @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  pages     StorePage[]
+  revisions StoreRevision[]
+
+  @@index([status])
+}
+
+model StorePage {
+  id        String   @id @default(cuid())
+  websiteId String
+  title     String
+  path      String
+  isHome    Boolean  @default(false)
+  status    String   @default("DRAFT")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  website  StoreWebsite   @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  sections StoreSection[]
+
+  @@unique([websiteId, path])
+  @@index([websiteId, sortOrder])
+}
+
+model StoreSection {
+  id        String   @id @default(cuid())
+  pageId    String
+  type      String
+  name      String
+  settings  String   @default("{}")
+  sortOrder Int      @default(0)
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page StorePage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId, sortOrder])
+}
+
+model StoreRevision {
+  id        String   @id @default(cuid())
+  websiteId String
+  version   Int
+  snapshot  String
+  createdAt DateTime @default(now())
+
+  website StoreWebsite @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+
+  @@unique([websiteId, version])
+  @@index([websiteId, createdAt])
+}
+
+
+model PlanSubscription {
+  id             String   @id @default(cuid())
+  merchantId     String
+  planCode       String
+  durationMonths Int
+  status         String   @default("PENDING")
+  startsAt       DateTime?
+  endsAt         DateTime?
+  amount         Int
+  currency       String   @default("IDR")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  merchant Merchant             @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  items    PlanSubscriptionItem[]
+  payments SubscriptionPayment[]
+
+  @@index([merchantId, status])
+  @@index([endsAt])
+}
+
+model PlanSubscriptionItem {
+  id             String @id @default(cuid())
+  subscriptionId String
+  serviceKey     String
+  connectionLimit Int   @default(1)
+
+  subscription PlanSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, serviceKey])
+  @@index([serviceKey])
+}
+
+model SubscriptionPayment {
+  id                String   @id @default(cuid())
+  subscriptionId    String
+  provider          String   @default("DEMO")
+  providerReference String?  @unique
+  paymentMethod     String?
+  status            String   @default("PENDING")
+  amount            Int
+  currency          String   @default("IDR")
+  paidAt            DateTime?
+  expiresAt         DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  subscription PlanSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, status])
+}
