@@ -1,3 +1,4 @@
+import SiteNav from "@/components/site-nav";
 import IntroAnimation from "@/components/intro-animation";
 import TeamIntro from "@/components/team-intro";
 import Link from "next/link";
@@ -58,29 +59,7 @@ function BrandMark() {
 export default function HomePage() {
   return (
     <main className="site-shell min-h-screen overflow-hidden bg-[#f1eee6] text-[#191916]">
-      <nav className="site-nav relative z-30 border-b border-black/10">
-        <div className="mx-auto flex h-[82px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-14">
-          <Link href="/" className="brand-lockup">
-            <BrandMark />
-            <span className="brand-word">
-              <strong>h3 works<span>.</span></strong>
-              <small>Independent creative studio</small>
-            </span>
-          </Link>
-
-          <div className="hidden items-center gap-9 text-[11px] font-bold md:flex">
-            <Link className="nav-link active" href="/">Home</Link>
-            <Link className="nav-link" href="/about">About</Link>
-            <Link className="nav-link" href="/services">Services</Link>
-            <Link className="nav-link" href="/products">Products</Link>
-            <Link className="nav-link" href="/contact">Contact</Link>
-          </div>
-
-          <Link href="/contact" className="nav-cta group">
-            Let's talk <ArrowUpRight size={15} className="transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
-          </Link>
-        </div>
-      </nav>
+      <SiteNav />
 
       <IntroAnimation />
 

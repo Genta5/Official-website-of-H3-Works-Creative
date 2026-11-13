@@ -1,3 +1,4 @@
+import SiteNav from "@/components/site-nav";
 import Link from "next/link";
 import { ArrowUpRight, Asterisk, Layers3, Bot, MessageCircle, Store, Workflow } from "lucide-react";
 
@@ -16,12 +17,7 @@ function Footer() {
 export default function ProductsPage() {
   return (
     <main className="site-shell min-h-screen overflow-hidden bg-[#f1eee6] text-[#191916]">
-      <nav className="site-nav relative z-30 border-b border-black/10"><div className="mx-auto flex h-[82px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-14">
-        <Link href="/" className="brand-lockup"><BrandMark /><span className="brand-word"><strong>h3 works<span>.</span></strong><small>Independent creative studio</small></span></Link>
-        <div className="hidden items-center gap-9 text-[11px] font-bold md:flex"><Link className="nav-link" href="/">Home</Link>
-            <Link className="nav-link" href="/about">About</Link><Link className="nav-link" href="/services">Services</Link><Link className="nav-link active" href="/products">Products</Link><Link className="nav-link" href="/contact">Contact</Link></div>
-        <Link href="/contact" className="nav-cta group">Let's talk <ArrowUpRight size={15} /></Link>
-      </div></nav>
+      <SiteNav />
 
       <section className="bg-[#f1eee6] py-24 sm:py-32"><div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-14">
         <div className="section-label mb-7 flex items-center gap-3"><Asterisk size={17} /> Products / Digital experiments</div>

@@ -1292,6 +1292,15 @@ img {
 .intro-static .intro-pull-label { transform: translateX(-50%); }
 
 @media (max-width: 640px) {
+  .intro-skip {
+    top: 14px;
+    right: 14px;
+    padding: 9px 11px;
+    font-size: 8px;
+    letter-spacing: .12em;
+    background: rgba(241, 238, 230, .92);
+  }
+
   .intro-hero { min-height: 90svh; padding: 18px; }
   .intro-stage { height: 68svh; min-height: 490px; }
   .intro-caption { top: 7%; font-size: 7px; }
