@@ -44,3 +44,7 @@ app/page.orderly-backup.tsx
 app/page.tsx.backup
 app/page.tsx.bak
 .npmrc
+
+# Design revision backups
+*.before-motion
+*.before-redesign
